@@ -4,7 +4,7 @@ function startBot() {
   const bot = mineflayer.createBot({
     host: 'donutsmp.net', // e.g. play.example.com
     port: 25565,             // default Minecraft port
-    username: process.env.MC_EMAIL // from Render env vars
+    username: process.env.MC_EMAIL, // from Render env vars
     auth: 'microsoft'
   });
 
