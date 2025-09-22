@@ -42,13 +42,13 @@ app.get('/api/status', (req, res) => {
 
 app.post('/api/connect', requireAuth, async (req, res) => {
   try {
-    const { host, port, email, auth } = req.body;
+    const { host, port, email, auth, version } = req.body;
     
     if (!host || !email) {
       return res.status(400).json({ error: 'Host and email are required' });
     }
 
-    await botManager.start(host, port || 25565, email, auth || 'microsoft');
+    await botManager.start(host, port || 25565, email, auth || 'microsoft', version);
     res.json({ success: true, message: 'Connecting to server...' });
   } catch (error) {
     res.status(400).json({ error: error.message });

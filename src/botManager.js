@@ -13,23 +13,30 @@ class BotManager extends EventEmitter {
     this.afkInterval = null;
   }
 
-  async start(host, port = 25565, email, auth = 'microsoft') {
+  async start(host, port = 25565, email, auth = 'microsoft', version = '1.20.1') {
     if (this.isConnecting || this.isConnected) {
       throw new Error('Bot is already connecting or connected');
     }
 
-    this.config = { host, port, email, auth };
+    this.config = { host, port, email, auth, version };
     this.isConnecting = true;
     
     try {
-      this.logger.log('console', `Attempting to connect to ${host}:${port} with email: ${email}`, 'info');
+      this.logger.log('console', `Attempting to connect to ${host}:${port} with email: ${email} (version: ${version})`, 'info');
       
-      this.bot = mineflayer.createBot({
+      const botConfig = {
         host,
         port: parseInt(port),
         username: email,
         auth: auth
-      });
+      };
+      
+      // Only set version if not auto-detect
+      if (version && version !== 'auto') {
+        botConfig.version = version;
+      }
+      
+      this.bot = mineflayer.createBot(botConfig);
 
       this.setupBotEvents();
       
@@ -75,7 +82,7 @@ class BotManager extends EventEmitter {
       if (this.config) {
         this.logger.log('console', 'Reconnecting in 5 seconds...', 'info');
         this.reconnectTimeout = setTimeout(() => {
-          this.start(this.config.host, this.config.port, this.config.email, this.config.auth)
+          this.start(this.config.host, this.config.port, this.config.email, this.config.auth, this.config.version)
             .catch(error => {
               this.logger.log('error', `Reconnection failed: ${error.message}`, 'error');
             });

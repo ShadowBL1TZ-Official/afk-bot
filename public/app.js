@@ -22,6 +22,7 @@ class MinecraftBotUI {
       portInput: document.getElementById('port'),
       emailInput: document.getElementById('email'),
       authSelect: document.getElementById('auth'),
+      versionSelect: document.getElementById('version'),
       connectBtn: document.getElementById('connect-btn'),
       disconnectBtn: document.getElementById('disconnect-btn'),
       console: document.getElementById('console'),
@@ -159,6 +160,7 @@ class MinecraftBotUI {
     const port = this.elements.portInput.value.trim();
     const email = this.elements.emailInput.value.trim();
     const auth = this.elements.authSelect.value;
+    const version = this.elements.versionSelect.value;
 
     if (!host || !email) {
       alert('Please enter both host and email');
@@ -172,7 +174,7 @@ class MinecraftBotUI {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.adminToken}`
         },
-        body: JSON.stringify({ host, port, email, auth })
+        body: JSON.stringify({ host, port, email, auth, version })
       });
 
       const result = await response.json();

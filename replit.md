@@ -17,6 +17,7 @@ This is a Minecraft bot project that uses the mineflayer library to create an au
 - Secure admin token authentication system
 - Unified console with filtering by log type (Chat, Server, Console, Auth, Errors)
 - Chat input for sending messages and commands to the Minecraft server
+- Minecraft version selection with popular versions (1.21.1 down to 1.8.9)
 - Auto-reconnection and AFK prevention features
 
 ## Configuration
@@ -35,13 +36,14 @@ The bot connects to `donutsmp.net:25565` using Microsoft authentication. To run 
 1. The ADMIN_TOKEN has been configured for web interface security
 2. Access the web interface through the Replit webview
 3. Enter the admin token when prompted on first access
-4. Configure server settings (host, port, email, authentication type)
+4. Configure server settings (host, port, email, authentication type, Minecraft version)
 5. Click Connect to start the bot connection
 6. Follow any Microsoft authentication prompts in the console
 7. Use the chat input to send messages or commands to the server
 8. Monitor all activity through the real-time console with filters
 
 ## Recent Changes
+- 2025-09-22: Added Minecraft version selection with support for major versions
 - 2025-09-22: Created complete web-based UI with Modrinth-style design
 - 2025-09-22: Implemented real-time WebSocket communication for logs and status
 - 2025-09-22: Added secure admin token authentication system
