@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Bot Control Panel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-robot"></i> Minecraft Bot Control Panel</h1>
+            <div class="status-indicator" id="status">
+                <span class="status-dot disconnected"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="card config-card">
+                    <h3><i class="fas fa-cog"></i> Server Configuration</h3>
+                    <form id="config-form">
+                        <div class="form-group">
+                            <label for="host">Server Host</label>
+                            <input type="text" id="host" name="host" placeholder="play.hypixel.net" value="donutsmp.net">
+                        </div>
+                        <div class="form-group">
+                            <label for="port">Port</label>
+                            <input type="number" id="port" name="port" placeholder="25565" value="25565">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="auth">Authentication</label>
+                            <select id="auth" name="auth">
+                                <option value="microsoft">Microsoft</option>
+                                <option value="offline">Offline</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" id="connect-btn" class="btn btn-primary">
+                                <i class="fas fa-plug"></i> Connect
+                            </button>
+                            <button type="button" id="disconnect-btn" class="btn btn-secondary" disabled>
+                                <i class="fas fa-unlink"></i> Disconnect
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="card console-card">
+                    <div class="console-header">
+                        <h3><i class="fas fa-terminal"></i> Console</h3>
+                        <div class="console-controls">
+                            <div class="filter-chips">
+                                <button class="filter-chip active" data-filter="all">All</button>
+                                <button class="filter-chip" data-filter="chat">Chat</button>
+                                <button class="filter-chip" data-filter="server">Server</button>
+                                <button class="filter-chip" data-filter="console">Console</button>
+                                <button class="filter-chip" data-filter="auth">Auth</button>
+                                <button class="filter-chip" data-filter="error">Errors</button>
+                            </div>
+                            <button id="clear-btn" class="btn btn-small">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="console-output" id="console"></div>
+                    <div class="console-input">
+                        <div class="input-wrapper">
+                            <input type="text" id="chat-input" placeholder="Type message or /command...">
+                            <button id="send-btn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            Enter to send • Ctrl+K to clear • Start with / for commands
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
