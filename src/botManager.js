@@ -11,7 +11,7 @@ class BotManager extends EventEmitter {
     this.isConnecting = false;
     this.reconnectTimeout = null;
     this.afkInterval = null;
-    this.retryDelay = 5000; // for optional backoff
+    this.retryDelay = 5000;
   }
 
   async start(host, port = 25565, email, auth = 'microsoft', version = 'auto') {
@@ -57,15 +57,12 @@ class BotManager extends EventEmitter {
       this.isConnected = true;
       this.isConnecting = false;
 
-      const version = this.bot.version || 'unknown';
+      const version = this.bot?.version || 'unknown';
       this.logger.log(
         'server',
         `Bot spawned on ${this.config.host}:${this.config.port} (v${version})`,
         'success'
       );
-
-      // Safe place for minecraft-data or other version‑dependent code
-      // const mcData = require('minecraft-data')(version);
 
       this.startAfkPrevention();
 
@@ -76,7 +73,7 @@ class BotManager extends EventEmitter {
         version
       });
 
-      this.retryDelay = 5000; // reset backoff
+      this.retryDelay = 5000;
     });
 
     this.bot.on('end', (reason) => {
@@ -89,7 +86,8 @@ class BotManager extends EventEmitter {
       this.emit('statusChange', {
         connected: false,
         server: null,
-        email: null
+        email: null,
+        version: 'unknown'
       });
 
       if (this.config) {
@@ -104,7 +102,6 @@ class BotManager extends EventEmitter {
           ).catch(error => {
             this.logger.log('error', `Reconnection failed: ${error.message}`, 'error');
           });
-          // Optional backoff
           this.retryDelay = Math.min(this.retryDelay * 2, 60000);
         }, this.retryDelay);
       }
@@ -113,13 +110,14 @@ class BotManager extends EventEmitter {
     this.bot.on('error', (error) => {
       this.isConnected = false;
       this.isConnecting = false;
-      const msg = error && error.message ? error.message : JSON.stringify(error);
+      const msg = error?.message || JSON.stringify(error);
       this.logger.log('error', `Bot error: ${msg}`, 'error');
 
       this.emit('statusChange', {
         connected: false,
         server: null,
         email: null,
+        version: 'unknown',
         error: msg
       });
     });
@@ -176,7 +174,8 @@ class BotManager extends EventEmitter {
     this.emit('statusChange', {
       connected: false,
       server: null,
-      email: null
+      email: null,
+      version: 'unknown'
     });
   }
 
@@ -199,7 +198,7 @@ class BotManager extends EventEmitter {
       connecting: this.isConnecting,
       server: this.config ? `${this.config.host}:${this.config.port}` : null,
       email: this.config ? this.config.email : null,
-      version: this.bot && this.bot.version ? this.bot.version : null
+      version: (this.bot && typeof this.bot.version === 'string') ? this.bot.version : 'unknown'
     };
   }
 }
