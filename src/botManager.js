@@ -11,35 +11,38 @@ class BotManager extends EventEmitter {
     this.isConnecting = false;
     this.reconnectTimeout = null;
     this.afkInterval = null;
+    this.retryDelay = 5000; // for optional backoff
   }
 
-  async start(host, port = 25565, email, auth = 'microsoft', version = '1.20.1') {
+  async start(host, port = 25565, email, auth = 'microsoft', version = 'auto') {
     if (this.isConnecting || this.isConnected) {
       throw new Error('Bot is already connecting or connected');
     }
 
     this.config = { host, port, email, auth, version };
     this.isConnecting = true;
-    
+
     try {
-      this.logger.log('console', `Attempting to connect to ${host}:${port} with email: ${email} (version: ${version})`, 'info');
-      
+      this.logger.log(
+        'console',
+        `Attempting to connect to ${host}:${port} with email: ${email} (version: ${version})`,
+        'info'
+      );
+
       const botConfig = {
         host,
         port: parseInt(port),
         username: email,
-        auth: auth
+        auth
       };
-      
-      // Only set version if not auto-detect
+
       if (version && version !== 'auto') {
         botConfig.version = version;
       }
-      
-      this.bot = mineflayer.createBot(botConfig);
 
+      this.bot = mineflayer.createBot(botConfig);
       this.setupBotEvents();
-      
+
     } catch (error) {
       this.isConnecting = false;
       this.logger.log('error', `Failed to create bot: ${error.message}`, 'error');
@@ -50,65 +53,82 @@ class BotManager extends EventEmitter {
   setupBotEvents() {
     if (!this.bot) return;
 
-    this.bot.on('spawn', () => {
+    this.bot.once('spawn', () => {
       this.isConnected = true;
       this.isConnecting = false;
-      this.logger.log('server', `Bot spawned on ${this.config.host}:${this.config.port}`, 'success');
-      
-      // Start AFK prevention
+
+      const version = this.bot.version || 'unknown';
+      this.logger.log(
+        'server',
+        `Bot spawned on ${this.config.host}:${this.config.port} (v${version})`,
+        'success'
+      );
+
+      // Safe place for minecraft-data or other version‑dependent code
+      // const mcData = require('minecraft-data')(version);
+
       this.startAfkPrevention();
-      
+
       this.emit('statusChange', {
         connected: true,
         server: `${this.config.host}:${this.config.port}`,
-        email: this.config.email
+        email: this.config.email,
+        version
       });
+
+      this.retryDelay = 5000; // reset backoff
     });
 
     this.bot.on('end', (reason) => {
       this.isConnected = false;
       this.isConnecting = false;
       this.stopAfkPrevention();
-      
+
       this.logger.log('server', `Bot disconnected: ${reason || 'Unknown reason'}`, 'warning');
-      
+
       this.emit('statusChange', {
         connected: false,
         server: null,
         email: null
       });
 
-      // Auto-reconnect after 5 seconds
       if (this.config) {
-        this.logger.log('console', 'Reconnecting in 5 seconds...', 'info');
+        this.logger.log('console', `Reconnecting in ${this.retryDelay / 1000}s...`, 'info');
         this.reconnectTimeout = setTimeout(() => {
-          this.start(this.config.host, this.config.port, this.config.email, this.config.auth, this.config.version)
-            .catch(error => {
-              this.logger.log('error', `Reconnection failed: ${error.message}`, 'error');
-            });
-        }, 5000);
+          this.start(
+            this.config.host,
+            this.config.port,
+            this.config.email,
+            this.config.auth,
+            this.config.version
+          ).catch(error => {
+            this.logger.log('error', `Reconnection failed: ${error.message}`, 'error');
+          });
+          // Optional backoff
+          this.retryDelay = Math.min(this.retryDelay * 2, 60000);
+        }, this.retryDelay);
       }
     });
 
     this.bot.on('error', (error) => {
       this.isConnected = false;
       this.isConnecting = false;
-      this.logger.log('error', `Bot error: ${error.message}`, 'error');
-      
+      const msg = error && error.message ? error.message : JSON.stringify(error);
+      this.logger.log('error', `Bot error: ${msg}`, 'error');
+
       this.emit('statusChange', {
         connected: false,
         server: null,
         email: null,
-        error: error.message
+        error: msg
       });
     });
 
     this.bot.on('kicked', (reason) => {
-      this.logger.log('server', `Bot was kicked: ${reason}`, 'warning');
+      this.logger.log('server', `Bot was kicked: ${JSON.stringify(reason)}`, 'warning');
     });
 
     this.bot.on('messagestr', (message) => {
-      // Filter out some spam messages but keep most chat
       if (!message.includes('§') || message.includes('[CHAT]')) {
         this.logger.log('chat', message, 'info');
       }
@@ -121,13 +141,15 @@ class BotManager extends EventEmitter {
 
   startAfkPrevention() {
     if (this.afkInterval) return;
-    
     this.afkInterval = setInterval(() => {
       if (this.bot && this.isConnected && this.bot.entity) {
-        // Small head movement to prevent AFK kick
-        this.bot.look(this.bot.entity.yaw + 0.1, this.bot.entity.pitch, true);
+        this.bot.look(
+          this.bot.entity.yaw + (Math.random() - 0.5) * 0.2,
+          this.bot.entity.pitch + (Math.random() - 0.5) * 0.2,
+          true
+        );
       }
-    }, 30000); // Every 30 seconds
+    }, 30000);
   }
 
   stopAfkPrevention() {
@@ -142,20 +164,15 @@ class BotManager extends EventEmitter {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    
     this.stopAfkPrevention();
     this.config = null;
-    
     if (this.bot) {
       this.bot.end();
       this.bot = null;
     }
-    
     this.isConnected = false;
     this.isConnecting = false;
-    
     this.logger.log('console', 'Bot stopped', 'info');
-    
     this.emit('statusChange', {
       connected: false,
       server: null,
@@ -167,17 +184,9 @@ class BotManager extends EventEmitter {
     if (!this.bot || !this.isConnected) {
       throw new Error('Bot is not connected');
     }
-
     try {
-      if (text.startsWith('/')) {
-        // Command
-        this.bot.chat(text);
-        this.logger.log('console', `Sent command: ${text}`, 'info');
-      } else {
-        // Regular chat message
-        this.bot.chat(text);
-        this.logger.log('console', `Sent message: ${text}`, 'info');
-      }
+      this.bot.chat(text);
+      this.logger.log('console', `Sent ${text.startsWith('/') ? 'command' : 'message'}: ${text}`, 'info');
     } catch (error) {
       this.logger.log('error', `Failed to send message: ${error.message}`, 'error');
       throw error;
@@ -189,7 +198,8 @@ class BotManager extends EventEmitter {
       connected: this.isConnected,
       connecting: this.isConnecting,
       server: this.config ? `${this.config.host}:${this.config.port}` : null,
-      email: this.config ? this.config.email : null
+      email: this.config ? this.config.email : null,
+      version: this.bot && this.bot.version ? this.bot.version : null
     };
   }
 }
