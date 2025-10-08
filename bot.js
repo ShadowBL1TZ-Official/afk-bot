@@ -3,7 +3,7 @@ require('./server.js'); // keep-alive web server for Replit
 
 function startBot() {
   const bot = mineflayer.createBot({
-    host: 'tavernmc.net',
+    host: 'donutsmp.net',
     port: 25565,
     username: process.env.MC_EMAIL,
     password: process.env.MC_PASSWORD, // or MC_TOKEN if using token
